@@ -84,4 +84,4 @@ jobs:
             item_id: ${{ fromJSON(steps.add_to_project.outputs.data).addProjectV2ItemById.item.id }}
             project_id: ${{ env.PROJECT_ID }}
             area_field_id: ${{ env.ISSUE_TYPE_FIELD_ID }}
-            area_id: "4a8bf7e4"
+            area_id: ${{ steps.set_output.outputs.field_option_id }}
