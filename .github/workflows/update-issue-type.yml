@@ -9,6 +9,7 @@ permissions: read-all
 
 env:
   PROJECT_ID: "PVT_kwDOBhbkis4AgtTD"
+  ISSUE_TYPE_FIELD_ID: "PVTSSF_lADOBhbkis4AgtTDzgVzvpY"
 
 jobs:
   update-github-projects-issue-type:
@@ -49,20 +50,38 @@ jobs:
 
       - name: Add issue to GitHub Project
         id: add_to_project
-        if: steps.check_labels.outputs.type != 'undefined'
         env:
           GITHUB_TOKEN: ${{ secrets.WOFFENDEN_BOT_GITHUB_TOKEN }}
         uses: octokit/graphql-action@ed5ac4718507eeda7aacfe7d78062ca18e9a8768 # v2.3.1
         with:
           query: |
-            # Variables have to be snake cased because of https://github.com/octokit/graphql-action/issues/164
-            mutation AddProject($project_id: ID!, $content_id: ID!) {
+            mutation AddIssueToProject($project_id: ID!, $content_id: ID!) {
               addProjectV2ItemById(input: { projectId: $project_id, contentId: $content_id }) {
                   item {
-                    id
+                    clientMutationId
                   }
                 }
               }
           variables: |
             project_id: ${{ env.PROJECT_ID }}
             content_id: ${{ github.event.issue.node_id }}
+
+
+      - name: Update issue type
+        id: update_issue_type
+        env:
+          GITHUB_TOKEN: ${{ secrets.WOFFENDEN_BOT_GITHUB_TOKEN }}
+        uses: octokit/graphql-action@ed5ac4718507eeda7aacfe7d78062ca18e9a8768 # v2.3.1
+        with:
+          query: |
+            mutation UpdateIssueType($item_id: ID!, $project_id: ID!, $area_field_id: ID!, $area_id: String) {
+              updateProjectV2ItemFieldValue(
+                input: { itemId: $item_id, projectId: $project_id, fieldId: $area_field_id, value: { singleSelectOptionId: $area_id } }) {
+                  clientMutationId
+                }
+              }
+          variables: |
+            item_id: ${{ fromJSON(steps.add_to_project.outputs.data).addProjectV2ItemById.item.id }}
+            project_id: ${{ env.PROJECT_ID }}
+            area_field_id: ${{ env.ISSUE_TYPE_FIELD_ID }}
+            area_id: ${{ steps.check_labels.outputs.field_option_id }}
