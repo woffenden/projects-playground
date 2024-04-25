@@ -3,9 +3,12 @@ name: Update GitHub Projects Issue Type
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited]
 
 permissions: read-all
+
+env:
+  PROJECT_ID: "4"
 
 jobs:
   update-github-projects-issue-type:
@@ -53,7 +56,7 @@ jobs:
         with:
           query: |
             # Variables have to be snake cased because of https://github.com/octokit/graphql-action/issues/164
-            mutation AddToIngestProject($project_id: ID!, $content_id: ID!) {
+            mutation AddProject($project_id: ID!, $content_id: ID!) {
               addProjectV2ItemById(input: { projectId: $project_id, contentId: $content_id }) {
                   item {
                     id
@@ -61,5 +64,5 @@ jobs:
                 }
               }
           variables: |
-            project_id: 4
+            project_id: ${{ env.PROJECT_ID }}
             content_id: ${{ github.event.issue.node_id }}
