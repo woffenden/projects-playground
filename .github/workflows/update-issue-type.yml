@@ -1,0 +1,45 @@
+---
+name: Update GitHub Projects Issue Type
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions: read-all
+
+jobs:
+  update-github-projects-issue-type:
+    runs-on: ubuntu-latest
+    name: Update GitHub Projects Issue Type
+    steps:
+      - name: Check issue for label
+        id: check_labels
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.WOFFENDEN_BOT_GITHUB_TOKEN }}
+          script: |
+            const issue = context.issue;
+            const labels = context.payload.issue.labels.map(label => label.name);
+
+            let type;
+            if (labels.includes("bug")) {
+              type = "bug";
+              fieldOptionId = "4a8bf7e4";
+            } else if (labels.includes("feature-request")) {
+              type = "feature-request";
+              fieldOptionId = "69079d3a";
+            } else if (labels.includes("story")) {
+              type = "story";
+              fieldOptionId = "0a294df2";
+            }
+
+            if (type) {
+              console.log(`Issue is a ${type}`);
+              core.setOutput(
+                "type", type,
+                "field_option_id", fieldOptionId
+              );
+            } else {
+              console.log("Issue is not a bug, epic, feature-request, or story");
+              core.setOutput("type", "undefined");
+            }
