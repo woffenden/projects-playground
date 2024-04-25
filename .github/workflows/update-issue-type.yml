@@ -3,7 +3,7 @@ name: Update GitHub Projects Issue Type
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 permissions: read-all
 
@@ -43,3 +43,23 @@ jobs:
               console.log("Issue is not a bug, epic, feature-request, or story");
               core.setOutput("type", "undefined");
             }
+
+      - name: Add issue to GitHub Project
+        id: add_to_project
+        if: steps.check_labels.outputs.type != 'undefined'
+        env:
+          GITHUB_TOKEN: ${{ secrets.WOFFENDEN_BOT_GITHUB_TOKEN }}
+        uses: octokit/graphql-action@ed5ac4718507eeda7aacfe7d78062ca18e9a8768 # v2.3.1
+        with:
+          query: |
+            # Variables have to be snake cased because of https://github.com/octokit/graphql-action/issues/164
+            mutation AddToIngestProject($project_id: ID!, $content_id: ID!) {
+              addProjectV2ItemById(input: { projectId: $project_id, contentId: $content_id }) {
+                  item {
+                    id
+                  }
+                }
+              }
+          variables: |
+            project_id: 4
+            content_id: ${{ github.event.issue.node_id }}
