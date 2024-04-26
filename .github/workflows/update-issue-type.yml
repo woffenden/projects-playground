@@ -3,13 +3,13 @@ name: Update GitHub Projects Issue Type
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
 
 permissions: read-all
 
 env:
-  PROJECT_ID: "PVT_kwDOBhbkis4AgtTD"
-  FIELD_ID: "PVTSSF_lADOBhbkis4AgtTDzgVzvpY"
+  PROJECT_ID: "PVT_kwDOBhbkis4AgtTD" # gh api graphql -f 'query=query{organization(login:"${ORGANISATION}"){projectV2(number: ${PROJECT_NUMBER}){id}}}' | jq -r '.data.organization.projectV2.id'
+  FIELD_ID: "PVTSSF_lADOBhbkis4AgtTDzgVzvpY" # gh project field-list ${PROJECT_NUMBER} --owner ${ORGANISATION} --format json | jq -r '.fields[] | select(.name=="${FIELD_NAME}") .id'
 
 jobs:
   update-github-projects-issue-type:
@@ -24,6 +24,10 @@ jobs:
           script: |
             const issue = context.issue;
             const labels = context.payload.issue.labels.map(label => label.name);
+
+            // fieldOptionId is the ID of the field option that corresponds to the issue type
+            // this can be obtained from the GitHub API by running
+            // gh project field-list ${PROJECT_NUMBER} --owner ${ORGANISATION} --format json | jq -r '.fields[] | select(.name=="${FIELD_NAME}") .options'
 
             let type;
             if (labels.includes("bug")) {
@@ -45,7 +49,7 @@ jobs:
               return null;
             }
 
-      - name: Add issue to GitHub Project
+      - name: Add issue to GitHub Project # Even though GitHub Project automation can do this, we need to do it again to get the item ID
         id: add_to_project
         env:
           GITHUB_TOKEN: ${{ secrets.WOFFENDEN_BOT_GITHUB_TOKEN }}
